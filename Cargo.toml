@@ -1,7 +1,9 @@
 [package]
 name = "rbxapi"
+description = "A Rust library for the Roblox API."
 version = "0.1.0"
 authors = ["PythonicIconic <coatedalmond@protonmail.com>"]
+license = "ISC"
 homepage = "https://github.com/PythonicIconic/RbxAPI-rs"
 repository = "https://github.com/PythonicIconic/RbxAPI-rs.git"
 keywords = ["roblox", "api"]
