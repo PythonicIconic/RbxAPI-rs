@@ -1,5 +1,5 @@
 # RbxAPI-rs
-RbxAPI-rs is an async Rust port of my [other](https://github.com/PythonicIconic/RbxAPI) Roblox API wrapper. [Discord](https://discord.gg/9XEsv5evjQ) for following the project!
+RbxAPI-rs is an async Rust port of my [other](https://github.com/PythonicIconic/RbxAPI) Roblox API wrapper. [Discord](https://discord.gg/pdstefSahB) for following the project!
 
 ## Usage
 The majority of this library currently revolves around the `Client` type. With this, you can get information about and perform various requests toauthentication-required
