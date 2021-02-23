@@ -21,7 +21,7 @@ impl UserBuilder for &str {
 
         if let Some(users) = data.get("data") {
             if let Some(id) = users[0].get("id") {
-                let builder = id.as_i64().unwrap() as i32;
+                let builder = id.as_i64().unwrap() as u64;
                 builder.new(client).await
             } else {
                 panic!("Failed to find users with given name")
@@ -33,14 +33,14 @@ impl UserBuilder for &str {
 }
 
 #[async_trait]
-impl UserBuilder for i32 {
+impl UserBuilder for u64 {
     async fn new(self, client: reqwest::Client) -> User {
         let user: User = client.get( &format!("{}/users/{}", crate::api::BASE, self))
             .send().await.expect("Failed to get user info from base")
             .json().await.expect("Failed to update struct with base");
 
         let mut u2 = User {
-            id: Some(self as u64),
+            id: Some(self),
             username: user.username,
             avatarfinal: user.avatarfinal,
             avataruri: user.avataruri,
@@ -60,8 +60,7 @@ pub struct User {
     #[serde(skip)]
     auth: Option<reqwest::Client>,
     #[serde(skip)]
-    friends:
-    Option<Vec<User>>,
+    friends: Option<Vec<User>>,
 
     #[serde(rename="Id")]
     pub id: Option<u64>,
@@ -97,6 +96,7 @@ impl User {
             let mut friends: Vec<User> = vec![];
             let mut page: i32 = 1;
             let mut page_string = format!("?page={}", page);
+
             let mut data = self.auth.as_ref().unwrap().get(&format!("{}/users/{}/friends{}", crate::api::BASE, self.id.unwrap(), page_string))
                 .send().await.expect("Failed to get friends list")
                 .json::<Vec<User>>().await.expect("Failed to get friends json");

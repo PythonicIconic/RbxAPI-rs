@@ -70,7 +70,7 @@ impl Client {
             .send().await.expect("Failed to get user info")
             .json::<serde_json::Value>().await.expect("Failed to get user json");
 
-        let builder = data.get("UserID").unwrap().as_i64().unwrap() as i32;
+        let builder = data.get("UserID").unwrap().as_u64().unwrap();
         UserBuilder::new(builder, self.session.clone()).await
     }
 

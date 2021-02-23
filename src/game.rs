@@ -7,7 +7,7 @@ pub trait GameBuilder {
 }
 
 #[async_trait]
-impl GameBuilder for i32 {
+impl GameBuilder for u64 {
     async fn new(self, client: reqwest::Client) -> Game {
         let data = client.get(&format!("{}/games/multiget-place-details?placeIds={}", crate::api::GAMES, self))
             .send().await.expect("Failed to get game universe info")
@@ -25,9 +25,21 @@ impl GameBuilder for i32 {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Server {
+    pub id: String,
+    #[serde(rename="maxPlayers")]
+    pub max_players: u8,
+    pub playing: u32,
+    pub fps: f32,
+    pub ping: u32
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Game {
     #[serde(skip)]
     auth: reqwest::Client,
+    #[serde(skip)]
+    servers: Option<Vec<Server>>,
 
     #[serde(rename="id")]
     pub universe_id: u64,
@@ -58,5 +70,49 @@ pub struct Game {
 impl std::fmt::Display for Game {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Game(placeid={}, name={})", self.place_id, self.name)
+    }
+}
+
+impl Game {
+    pub async fn servers(&mut self) -> Vec<Server> {
+        if let Some(servers) = self.servers.clone() {
+            return servers;
+        } else {
+            let mut servers: Vec<Server> = vec![];
+            let mut data = self.auth.get(&format!("{}/games/{}/servers/Public?limit=100", crate::api::GAMES, self.place_id))
+                .send().await.expect("Failed to get server list")
+                .json::<serde_json::Value>().await.expect("Failed to get server json");
+
+            while let Some(cursor) = data.clone().get("nextPageCursor") {
+                if cursor.is_null() { break }
+
+                if let Some(info) = data.get("data") {
+                    let data_servers: Vec<Server> = serde_json::from_value(info.clone()).unwrap_or(vec![]);
+                    servers.extend_from_slice(&data_servers[..]);
+                }
+
+                data = self.auth.get(&format!("{}/games/{}/servers/Public?limit=100&cursor={}", crate::api::GAMES, self.place_id, cursor.as_str().unwrap()))
+                    .send().await.expect("Failed to get server list")
+                    .json::<serde_json::Value>().await.expect("Failed to get server json");
+
+                if let Some(error) = data.get("errors") {
+                    if let Some(message) = error[0].get("message") {
+                        if message.as_str().unwrap() == "TooManyRequests" {
+                            println!("Rate limited, sleeping for 3 seconds");
+                            tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
+                            data = self.auth.get(&format!("{}/games/{}/servers/Public?limit=100&cursor={}", crate::api::GAMES, self.place_id, cursor.as_str().unwrap()))
+                                .send().await.expect("Failed to get server list")
+                                .json::<serde_json::Value>().await.expect("Failed to get server json");
+                        }
+                    }
+
+                    continue
+                }
+            }
+
+            self.servers = Some(servers.clone());
+            servers
+        }
     }
 }
