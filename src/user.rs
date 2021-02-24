@@ -117,4 +117,10 @@ impl User {
             friends
         }
     }
+
+    pub async fn has_asset(&self, asset_id: u64) -> bool {
+        self.auth.as_ref().unwrap_or(&reqwest::Client::new()).get(&format!("{}/ownership/hasasset?userId={}&assetId={}", crate::api::BASE, self.id.unwrap(), asset_id))
+            .send().await.expect("Failed to get ownership info")
+            .json::<bool>().await.expect("Failed to get ownership json")
+    }
 }
