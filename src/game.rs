@@ -3,12 +3,12 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait GameBuilder {
-    async fn new(self, client: reqwest::Client) -> Game;
+    async fn new(self, client: &reqwest::Client) -> Game;
 }
 
 #[async_trait]
 impl GameBuilder for u64 {
-    async fn new(self, client: reqwest::Client) -> Game {
+    async fn new(self, client: &reqwest::Client) -> Game {
         let data = client.get(&format!("{}/games/multiget-place-details?placeIds={}", crate::api::GAMES, self))
             .send().await.expect("Failed to get game universe info")
             .json::<serde_json::Value>().await.expect("Failed to get game universe json");
@@ -18,7 +18,7 @@ impl GameBuilder for u64 {
                 .json::<serde_json::Value>().await.expect("Failed to get game root json");
 
         Game {
-            auth: client,
+            auth: client.clone(),
             ..serde_json::from_value(data.get("data").expect("Failed to get game root data")[0].clone()).expect("Failed to parse into Game")
         }
     }

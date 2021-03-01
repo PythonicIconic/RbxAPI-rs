@@ -62,7 +62,7 @@ impl Client {
     }
 
     pub async fn user(&self, builder: impl UserBuilder) -> User {
-        builder.new(self.session.clone()).await
+        builder.new(&self.session).await
     }
 
     pub async fn current_user(&self) -> User {
@@ -71,11 +71,11 @@ impl Client {
             .json::<serde_json::Value>().await.expect("Failed to get user json");
 
         let builder = data.get("UserID").unwrap().as_u64().unwrap();
-        UserBuilder::new(builder, self.session.clone()).await
+        UserBuilder::new(builder, &self.session).await
     }
 
     pub async fn game(&self, builder: impl GameBuilder) -> Game {
-        builder.new(self.session.clone()).await
+        builder.new(&self.session).await
     }
 
     async fn validate_cookie(&self) {

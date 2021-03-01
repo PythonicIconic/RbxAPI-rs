@@ -5,12 +5,12 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait UserBuilder {
-    async fn new(self, client: reqwest::Client) -> User;
+    async fn new(self, client: &reqwest::Client) -> User;
 }
 
 #[async_trait]
 impl UserBuilder for &str {
-    async fn new(self, client: reqwest::Client) -> User {
+    async fn new(self, client: &reqwest::Client) -> User {
         let mut map = HashMap::new();
         map.insert("usernames", vec![self]);
 
@@ -34,7 +34,7 @@ impl UserBuilder for &str {
 
 #[async_trait]
 impl UserBuilder for u64 {
-    async fn new(self, client: reqwest::Client) -> User {
+    async fn new(self, client: &reqwest::Client) -> User {
         let user: User = client.get( &format!("{}/users/{}", crate::api::BASE, self))
             .send().await.expect("Failed to get user info from base")
             .json().await.expect("Failed to update struct with base");
